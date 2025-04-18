@@ -43,14 +43,25 @@ public static class ChatClientFactory
 
         // Get the Copilot token using the GitHub token
         var helper = new GitHubCopilotHelper();
-        var copilotToken = helper.GetCopilotTokenSync(githubToken);
+        var tokenDetails = helper.GetCopilotTokenDetailsSync(githubToken);
         
-        if (string.IsNullOrEmpty(copilotToken))
+        if (string.IsNullOrEmpty(tokenDetails.token))
         {
             throw new EnvVarSettingException("Failed to get a valid Copilot token from GitHub. Please run 'chatx github login' to authenticate.");
         }
 
-        var options = InitOpenAIClientOptions(endpoint, $"Bearer {copilotToken}");
+        // Create options with the initial auth header
+        var options = InitOpenAIClientOptions(endpoint, $"Bearer {tokenDetails.token}");
+        
+        // Create the refresh policy with automatic token refresh capability
+        var refreshPolicy = CopilotTokenRefreshPolicy.CreateWithAutoRefresh(
+            tokenDetails.token!, 
+            tokenDetails.expires_at!.Value, 
+            githubToken,
+            helper);
+        
+        // Add the refresh policy to the pipeline
+        options.AddPolicy(refreshPolicy, PipelinePosition.BeforeTransport);
 
         var integrationIdOk = !string.IsNullOrEmpty(integrationId);
         if (integrationIdOk) options.AddPolicy(new CustomHeaderPolicy("Copilot-Integration-Id", integrationId!), PipelinePosition.BeforeTransport);
@@ -60,7 +71,7 @@ public static class ChatClientFactory
 
         var chatClient = new ChatClient(model, new ApiKeyCredential(" "), options);
         
-        ConsoleHelpers.WriteDebugLine("Using GitHub Copilot token for authentication");
+        ConsoleHelpers.WriteDebugLine("Using GitHub Copilot token for authentication (with auto-refresh)");
         return chatClient.AsChatClient();
     }
 

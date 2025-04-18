@@ -5,6 +5,14 @@ All notable changes to the ChatX project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- GitHub Copilot integration: Fixed token expiration issue by implementing automatic token refresh
+  - Tokens are now automatically refreshed before they expire
+  - Added CopilotTokenRefreshPolicy that intercepts requests and updates authorization headers
+  - Enhanced GitHubCopilotHelper to better track token expiration information
+
 ## [1.0.0-alpha-20250402] - 2025-04-02
 
 ### Added

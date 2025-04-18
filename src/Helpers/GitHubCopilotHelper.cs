@@ -112,7 +112,7 @@ public class GitHubCopilotHelper
     /// <summary>
     /// Gets a Copilot token using the GitHub token (async version)
     /// </summary>
-    public async Task<string> GetCopilotTokenAsync(string githubToken)
+    public async Task<CopilotTokenResponse> GetCopilotTokenDetailsAsync(string githubToken)
     {
         // Create new request message to control headers exactly
         var request = new HttpRequestMessage(HttpMethod.Get, COPILOT_TOKEN_URL);
@@ -142,7 +142,16 @@ public class GitHubCopilotHelper
             throw new InvalidOperationException("Failed to get Copilot token");
         }
         
-        return tokenData.token;
+        return tokenData;
+    }
+    
+    /// <summary>
+    /// Gets a Copilot token using the GitHub token (async version) - returns just the token
+    /// </summary>
+    public async Task<string> GetCopilotTokenAsync(string githubToken)
+    {
+        var tokenData = await GetCopilotTokenDetailsAsync(githubToken);
+        return tokenData.token!;
     }
     
     /// <summary>
@@ -158,6 +167,39 @@ public class GitHubCopilotHelper
         {
             throw new InvalidOperationException($"Failed to get Copilot token: {ex.Message}", ex);
         }
+    }
+    
+    /// <summary>
+    /// Gets a Copilot token details using the GitHub token (sync version)
+    /// </summary>
+    public CopilotTokenResponse GetCopilotTokenDetailsSync(string githubToken)
+    {
+        try
+        {
+            return GetCopilotTokenDetailsAsync(githubToken).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to get Copilot token details: {ex.Message}", ex);
+        }
+    }
+    
+    /// <summary>
+    /// Refreshes the Copilot token using the GitHub token
+    /// </summary>
+    public CopilotTokenResponse RefreshCopilotTokenWithDetails(string githubToken)
+    {
+        ConsoleHelpers.WriteDebugLine("Refreshing Copilot token with expiration details...");
+        return GetCopilotTokenDetailsSync(githubToken);
+    }
+    
+    /// <summary>
+    /// Refreshes the Copilot token using the GitHub token (returns just the token)
+    /// </summary>
+    public string RefreshCopilotToken(string githubToken)
+    {
+        var details = RefreshCopilotTokenWithDetails(githubToken);
+        return details.token!;
     }
 
     /// <summary>
@@ -205,7 +247,7 @@ public class GitHubCopilotHelper
         public string? scope { get; set; }
     }
 
-    private class CopilotTokenResponse
+    public class CopilotTokenResponse
     {
         public string? token { get; set; }
         public int? expires_at { get; set; }
