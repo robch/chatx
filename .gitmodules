@@ -1,0 +1,3 @@
+[submodule "Boxed"]
+	path = Boxed
+	url = https://github.com/MichaelSinz/Boxed
