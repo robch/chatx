@@ -60,9 +60,12 @@ abstract public class ProgramRunner
             }
         }
 
-        ConsoleHelpers.Configure(commandLineOptions!.Debug, commandLineOptions.Verbose, commandLineOptions.Quiet);
+        var debug = ConsoleHelpers.IsDebug() || commandLineOptions!.Debug;
+        var verbose = ConsoleHelpers.IsVerbose() || commandLineOptions!.Verbose;
+        var quiet = ConsoleHelpers.IsQuiet() || commandLineOptions!.Quiet;
+        ConsoleHelpers.Configure(debug, verbose, quiet);
 
-        var helpCommand = commandLineOptions.Commands.OfType<HelpCommand>().FirstOrDefault();
+        var helpCommand = commandLineOptions!.Commands.OfType<HelpCommand>().FirstOrDefault();
         if (helpCommand != null)
         {
             DisplayBanner();
@@ -187,8 +190,10 @@ abstract public class ProgramRunner
 
     private static string[] ProcessDirectives(string[] args)
     {
+        ConsoleHelpers.WriteDebugLine($"ProcessDirectives: {string.Join(" ", args)}");
         args = CheckWaitForDebugger(args);
         args = CheckDebug(args);
+        ConsoleHelpers.WriteDebugLine($"ProcessDirectives: exiting w/ {string.Join(" ", args)}");
         return args;
     }
 

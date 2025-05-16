@@ -28,18 +28,13 @@ public static class McpClientManager
         // Create the MCP client based on the transport type
         if (serverConfig is StdioServerConfig stdioConfig)
         {
-            return await McpClientFactory.CreateAsync(new()
+            return await McpClientFactory.CreateAsync(new StdioClientTransport(new()
             {
-                Id = serverName,
                 Name = serverName,
-                TransportType = TransportTypes.StdIo,
-                TransportOptions = new()
-                {
-                    ["command"] = stdioConfig.Command,
-                    ["arguments"] = string.Join(" ", stdioConfig.Args),
-                    // environmentVariables = stdioConfig.Env
-                }
-            });
+                Command = stdioConfig.Command,
+                Arguments = stdioConfig.Args,
+                EnvironmentVariables = stdioConfig.Env,
+            }));
         }
         else if (serverConfig is SseServerConfig sseConfig)
         {

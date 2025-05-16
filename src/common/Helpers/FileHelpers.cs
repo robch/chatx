@@ -161,6 +161,34 @@ public class FileHelpers
             .TrimEnd(' ', '/', '\\');
     }
 
+    public static void ReadIgnoreFile(string ignoreFile, out List<string> excludeGlobs, out List<Regex> excludeFileNamePatternList)
+    {
+        ConsoleHelpers.WriteDebugLine($"ReadIgnoreFile: ignoreFile: {ignoreFile}");
+
+        excludeGlobs = new List<string>();
+        excludeFileNamePatternList = new List<Regex>();
+
+        var fi = new FileInfo(ignoreFile);
+        if (!fi.Exists) return;
+
+        var lines = ReadAllLines(ignoreFile);
+        foreach (var line in lines)
+        {
+            var assumeIsGlob = line.Contains('/') || line.Contains('\\');
+            if (assumeIsGlob)
+            {
+                var excludeGlob = PathHelpers.Combine(fi.DirectoryName!, line) ?? line;
+                ConsoleHelpers.WriteDebugLine($"ReadIgnoreFile; ignore glob: {excludeGlob}");
+                excludeGlobs.Add(excludeGlob!);
+            }
+            else
+            {
+                ConsoleHelpers.WriteDebugLine($"ReadIgnoreFile; exclude pattern: {line}");
+                excludeFileNamePatternList.Add(new Regex(line));
+            }
+        }
+    }
+
     public static IEnumerable<string> FilesFromGlobs(List<string> globs)
     {
         foreach (var glob in globs)
@@ -199,11 +227,16 @@ public class FileHelpers
 
     public static IEnumerable<string> FindMatchingFiles(
         List<string> globs,
-        List<string> excludeGlobs,
-        List<Regex> excludeFileNamePatternList,
-        List<Regex> includeFileContainsPatternList,
-        List<Regex> excludeFileContainsPatternList)
+        List<string>? excludeGlobs = null,
+        List<Regex>? excludeFileNamePatternList = null,
+        List<Regex>? includeFileContainsPatternList = null,
+        List<Regex>? excludeFileContainsPatternList = null)
     {
+        excludeGlobs ??= new List<string>();
+        excludeFileNamePatternList ??= new List<Regex>();
+        includeFileContainsPatternList ??= new List<Regex>();
+        excludeFileContainsPatternList ??= new List<Regex>();
+        
         var excludeFiles = new HashSet<string>(FilesFromGlobs(excludeGlobs));
         var files = FilesFromGlobs(globs)
             .Where(file => !excludeFiles.Contains(file))
@@ -266,6 +299,15 @@ public class FileHelpers
         return content;
     }
 
+    public static string[] ReadAllLines(string fileName)
+    {
+        var lines = ConsoleHelpers.IsStandardInputReference(fileName)
+            ? ConsoleHelpers.GetAllLinesFromStdin().ToArray()
+            : File.ReadAllLines(fileName, Encoding.UTF8);
+
+        return lines;
+    }
+
     public static string WriteAllText(string fileName, string content, string? saveToFolderOnAccessDenied = null)
     {
         try
@@ -294,6 +336,22 @@ public class FileHelpers
     {
         DirectoryHelpers.EnsureDirectoryForFileExists(fileName);
         File.AppendAllText(fileName, trajectoryContent, Encoding.UTF8);
+    }
+
+    public static string? WriteTextToTempFile(string? text, string? extension = null)
+    {
+        if (!string.IsNullOrEmpty(text))
+        {
+            var tempFile = Path.GetTempFileName();
+            if (!string.IsNullOrEmpty(extension))
+            {
+                tempFile = $"{tempFile}.{extension}";
+            }
+
+            File.WriteAllText(tempFile, text);
+            return tempFile;
+        }
+        return null;
     }
 
     public static string GetFriendlyLastModified(FileInfo fileInfo)

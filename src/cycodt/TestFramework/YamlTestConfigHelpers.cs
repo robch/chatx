@@ -23,8 +23,10 @@ public class YamlTestConfigHelpers
         return null;
     }
 
-    public static DirectoryInfo GetTestDirectory(DirectoryInfo checkHereAndParents)
+    public static DirectoryInfo GetTestDirectory(DirectoryInfo? checkHereAndParents = null)
     {
+        checkHereAndParents ??= new DirectoryInfo(Directory.GetCurrentDirectory());
+
         var file = FindTestConfigFile(checkHereAndParents);
         if (file != null)
         {

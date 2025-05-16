@@ -80,23 +80,18 @@ class AiInstructionProcessor
                 RewriteExpandedFile(systemPromptFileName);
             }
 
-            var process = new System.Diagnostics.Process();
-            process.StartInfo.FileName = useCycoD ? "cycod" : "ai";
-            process.StartInfo.Arguments = arguments;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardInput = false;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.Start();
-
-            ConsoleHelpers.WriteDebugLine(process.StartInfo.Arguments);
+            ConsoleHelpers.WriteDebugLine($"Command: {(useCycoD ? "cycod" : "ai")} {arguments}");
             ConsoleHelpers.DisplayStatus("Applying instructions ...");
-
-            stdOut = process.StandardOutput.ReadToEnd();
-            stdErr = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-            returnCode = process.ExitCode;
+            
+            var processResult = new RunnableProcessBuilder()
+                .WithFileName(useCycoD ? "cycod" : "ai")
+                .WithArguments(arguments)
+                .WithTimeout(300000) // 5 minute timeout
+                .Run();
+            
+            stdOut = processResult.StandardOutput;
+            stdErr = processResult.StandardError;
+            returnCode = processResult.ExitCode;
         }
         catch (Exception ex)
         {
@@ -133,21 +128,15 @@ class AiInstructionProcessor
 
             try
             {
-                var process = new System.Diagnostics.Process();
-                process.StartInfo.FileName = "cycod";
-                process.StartInfo.Arguments = "version";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardInput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.Start();
-
                 ConsoleHelpers.WriteDebugLine("Checking cycod installation ...");
-
-                process.StandardInput.Close();
-                process.WaitForExit();
                 
-                _useCycoD = process.ExitCode == 0;
+                var commandResult = new RunnableProcessBuilder()
+                    .WithFileName("cycod")
+                    .WithArguments("version")
+                    .WithTimeout(5000) // 5 second timeout
+                    .Run();
+                
+                _useCycoD = commandResult.Success;
             }
             catch (Exception ex)
             {

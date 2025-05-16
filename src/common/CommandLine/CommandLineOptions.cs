@@ -118,7 +118,7 @@ public class CommandLineOptions
         if (!input.StartsWith("@@")) throw new ArgumentException("Not an @@ file input");
 
         var fileName = input.Substring(2);
-        var fileNameOk = fileName == "-" || File.Exists(fileName);
+        var fileNameOk = FileHelpers.FileExists(fileName);
         if (fileNameOk)
         {
             var lines = ConsoleHelpers.IsStandardInputReference(fileName)
@@ -167,7 +167,7 @@ public class CommandLineOptions
 
         if (command != null && !command.IsEmpty())
         {
-            this.Commands.Add(command);
+            this.Commands.Add(command.Validate());
         }
     }
 
@@ -468,7 +468,7 @@ public class CommandLineOptions
         return argStr;
     }
 
-    protected IEnumerable<string> ValidateStrings(string arg, IEnumerable<string> argStrs, string argDescription)
+    protected IEnumerable<string> ValidateStrings(string arg, IEnumerable<string> argStrs, string argDescription, bool allowEmptyStrings = false)
     {
         var strings = argStrs.ToList();
         if (!strings.Any())
@@ -476,7 +476,7 @@ public class CommandLineOptions
             throw new CommandLineException($"Missing {argDescription} for {arg}");
         }
 
-        return strings.Select(x => ValidateString(arg, x, argDescription)!);
+        return strings.Select(x => allowEmptyStrings ? x : ValidateString(arg, x, argDescription)!);
     }
 
     protected static string ValidateJoinedString(string arg, string seed, IEnumerable<string> values, string separator, string argDescription)
@@ -578,6 +578,22 @@ public class CommandLineOptions
         {
             throw new CommandLineException($"Invalid regular expression pattern for {arg}: {pattern}");
         }
+    }
+
+    protected void ValidateExcludeRegExAndGlobPatterns(string arg, IEnumerable<string> patterns, out IEnumerable<Regex> asRegExs, out List<string> asGlobs)
+    {
+        if (patterns.Count() == 0)
+        {
+            throw new CommandLineException($"Missing patterns for {arg}");
+        }
+
+        var containsSlash = (string x) => x.Contains('/') || x.Contains('\\');
+        asRegExs = patterns
+            .Where(x => !containsSlash(x))
+            .Select(x => ValidateFilePatternToRegExPattern(arg, x));
+        asGlobs = patterns
+            .Where(x => containsSlash(x))
+            .ToList();
     }
 
     protected Regex ValidateFilePatternToRegExPattern(string arg, string pattern)

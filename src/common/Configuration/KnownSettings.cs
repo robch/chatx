@@ -10,6 +10,10 @@ public static class KnownSettings
 {
     #region Setting Keys (Dot Notation)
 
+    // Anthropic settings
+    public const string AnthropicApiKey = "Anthropic.ApiKey";
+    public const string AnthropicModelName = "Anthropic.ModelName";
+
     // Azure OpenAI settings
     public const string AzureOpenAIApiKey = "Azure.OpenAI.ApiKey";
     public const string AzureOpenAIEndpoint = "Azure.OpenAI.Endpoint";
@@ -44,6 +48,9 @@ public static class KnownSettings
     /// </summary>
     private static readonly HashSet<string> _secretSettings = new(StringComparer.OrdinalIgnoreCase)
     {
+        // Anthropic secrets
+        AnthropicApiKey,
+        
         // Azure OpenAI secrets
         AzureOpenAIApiKey,
         
@@ -63,6 +70,10 @@ public static class KnownSettings
     /// </summary>
     private static readonly Dictionary<string, string> _dotToEnvVarMap = new(StringComparer.OrdinalIgnoreCase)
     {
+        // Anthropic mappings
+        { AnthropicApiKey, "ANTHROPIC_API_KEY" },
+        { AnthropicModelName, "ANTHROPIC_MODEL_NAME" },
+
         // Azure OpenAI mappings
         { AzureOpenAIApiKey, "AZURE_OPENAI_API_KEY" },
         { AzureOpenAIEndpoint, "AZURE_OPENAI_ENDPOINT" },
@@ -94,6 +105,10 @@ public static class KnownSettings
     /// </summary>
     private static readonly Dictionary<string, string> _dotToCLIOptionMap = new(StringComparer.OrdinalIgnoreCase)
     {
+        // Anthropic mappings
+        { AnthropicApiKey, "--anthropic-api-key" },
+        { AnthropicModelName, "--anthropic-model-name" },
+
         // Azure OpenAI mappings
         { AzureOpenAIApiKey, "--azure-openai-api-key" },
         { AzureOpenAIEndpoint, "--azure-openai-endpoint" },
@@ -132,6 +147,15 @@ public static class KnownSettings
     #endregion
     
     #region Category Groupings
+
+    /// <summary>
+    /// Collection of settings for Anthropic integration.
+    /// </summary>
+    public static readonly HashSet<string> AnthropicSettings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        AnthropicApiKey,
+        AnthropicModelName
+    };
     
     /// <summary>
     /// Collection of settings for Azure OpenAI integration.

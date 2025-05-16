@@ -1,0 +1,21 @@
+USAGE: cycodt list [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Lists all available tests
+
+    cycodt list
+
+  EXAMPLE 2: Lists tests that contains 'echo'
+
+    cycodt list --contains echo
+
+  EXAMPLE 3: Lists tests from files under 'tests' directory
+
+    cycodt list --files tests/**/*.yaml
+
+SEE ALSO
+
+  cycodt help list
+  cycodt help run examples
+  cycodt help expect examples

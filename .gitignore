@@ -13,6 +13,12 @@ src/cycodt/bin/
 tests/**/bin/
 tests/**/obj/
 
+.cycod/config.yaml
 .cycod/scratch/
-
 .env
+
+test-results.trx
+tests/cycodt-yaml/testresults/
+tests/cycodt-yaml/inception-layer-1/test-results-simple-optional.trx
+tests/cycodt-yaml/inception-layer-1/test-results-simple.trx
+tests/cycodt-yaml/inception-layer-1/test-results-simple2.trx

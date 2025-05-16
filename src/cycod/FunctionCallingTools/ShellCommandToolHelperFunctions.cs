@@ -22,7 +22,7 @@ public class ShellCommandToolHelperFunctions
         catch (TimeoutException te)
         {
             // If there is a timeout, reset the session.
-            BashShellSession.Instance.Shutdown();
+            BashShellSession.Instance.ForceShutdown();
             return $"<timed out and killed process - environment state has been reset>\n{te.Message}";
         }
         catch (Exception ex)
@@ -51,7 +51,7 @@ public class ShellCommandToolHelperFunctions
         catch (TimeoutException te)
         {
             // If there is a timeout, reset the session.
-            CmdShellSession.Instance.Shutdown();
+            CmdShellSession.Instance.ForceShutdown();
             return $"<timed out and killed process - environment state has been reset>\n{te.Message}";
         }
         catch (Exception ex)
@@ -80,7 +80,7 @@ public class ShellCommandToolHelperFunctions
         catch (TimeoutException te)
         {
             // If there is a timeout, reset the session.
-            PowershellShellSession.Instance.Shutdown();
+            PowershellShellSession.Instance.ForceShutdown();
             return $"<timed out and killed process - environment state has been reset>\n{te.Message}";
         }
         catch (Exception ex)

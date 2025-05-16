@@ -1,0 +1,198 @@
+env:
+  ENV1: VAL1
+  ENV2: VAL2
+
+tests:
+- name: Simple environment variable
+  bash: 'echo "TESTVAR=$TESTVAR"'
+  env:
+    TESTVAR: test_value
+  expect-regex: TESTVAR=test_value
+
+- name: Numeric values
+  bash: 'echo "NUM=$NUM"'
+  env:
+    NUM: 12345
+  expect-regex: NUM=12345
+
+- name: String with spaces
+  bash: 'echo "TEXT=$TEXT"'
+  env:
+    TEXT: this is a test
+  expect-regex: TEXT=this is a test
+
+- name: Empty string value
+  bash: 'echo "EMPTY=$EMPTY"'
+  env:
+    EMPTY: ""
+  expect-regex: EMPTY=
+
+- name: Special characters in value
+  bash: echo "SPECIAL=$SPECIAL"
+  env:
+    SPECIAL: "!@#$%^&*()_+-=[]{}|;'\":,./<>?"
+  expect-regex: "SPECIAL=!@#\\$%\\^&\\*\\(\\)_\\+-=\\[\\]\\{\\}\\|;'\":,./<>?"
+
+- name: Bash environment variable expansion
+  bash: 'echo "$HOME contains ${HOME:-no home}"'
+  expect-regex: .* contains .*
+
+- name: test `env:` yaml element 1
+  bash: |
+    echo ENV1=$ENV1
+    echo ENV2=$ENV2
+    set
+  expect-regex: |
+    VAL1
+    VAL2
+
+- name: test `env:` yaml element 2
+  env:
+    ENV1: VAL3
+  bash: |
+    echo $ENV1
+    echo $ENV2
+  expect-regex: |
+    VAL3
+    VAL2
+
+- name: test `env:` yaml element 3
+  env:
+    ENV2: VAL4
+  bash: |
+    echo $ENV1
+    echo $ENV2
+  expect-regex: |
+    VAL1
+    VAL4
+
+- name: test `env:` yaml element 4
+  env:
+    ENV2: '$(ENV1);$(ENV2);hello'
+  bash: |
+    echo $ENV1
+    echo $ENV2
+  expect-regex: |
+    VAL1
+    VAL1;VAL2;hello
+
+- name: Multiple environment variables
+  bash: 'echo "VAR1=$VAR1" && echo "VAR2=$VAR2" && echo "VAR3=$VAR3"'
+  env:
+    VAR1: value1
+    VAR2: value2
+    VAR3: value3
+  expect-regex: |
+    VAR1=value1
+    VAR2=value2
+    VAR3=value3
+
+- area: Parent environment variables
+  env:
+    PARENT_VAR: parent_value
+  tests:
+    - name: Child inherits parent env var
+      bash: 'echo "PARENT_VAR=$PARENT_VAR"'
+      expect-regex: PARENT_VAR=parent_value
+
+    - name: Child overrides parent env var
+      bash: 'echo "PARENT_VAR=$PARENT_VAR"'
+      env:
+        PARENT_VAR: overridden_value
+      expect-regex: PARENT_VAR=overridden_value
+
+- area: Multiple level inheritance
+  env:
+    TOP_LEVEL: top_value
+  tests:
+    - name: Mid level
+      env:
+        MID_LEVEL: mid_value
+      tests:
+        - name: Bottom level - inherits both
+          bash: 'echo "TOP=$TOP_LEVEL" && echo "MID=$MID_LEVEL"'
+          expect-regex: |
+            TOP=top_value
+            MID=mid_value
+        
+        - name: Bottom level - overrides top
+          bash: 'echo "TOP=$TOP_LEVEL" && echo "MID=$MID_LEVEL"'
+          env:
+            TOP_LEVEL: new_top_value
+          expect-regex: |
+            TOP=new_top_value
+            MID=mid_value
+
+- area: Interpolation
+  tests:
+  - name: Basic variable interpolation
+    env:
+      BASE_VAR: base_value
+      DERIVED_VAR: prefix_$(BASE_VAR)_suffix
+    bash: 'echo "DERIVED_VAR=$DERIVED_VAR"'
+    expect-regex: DERIVED_VAR=prefix_base_value_suffix
+
+  - name: Nested variable interpolation
+    env:
+      VAR1: value1
+      VAR2: $(VAR1)_value2
+      VAR3: $(VAR2)_value3
+    bash: 'echo "VAR3=$VAR3"'
+    expect-regex: VAR3=value1_value2_value3
+
+  - name: Variable interpolation with external env vars
+    env:
+      USER_HOME: $(HOME)
+      USER_PATH: $(PATH)
+    bash: 'echo "HOME Dir First Part: $USER_HOME"'
+    expect-regex: "HOME Dir First Part: .*"
+
+- area: Edge Cases
+  tests:
+  - name: Very long environment variable
+    env:
+      LONG_VAR: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+    bash: 'echo "LONG_VAR length: ${#LONG_VAR}"'
+    expect-regex: "LONG_VAR length: 124"
+
+  - name: Unicode in environment variables
+    env:
+      UNICODE_VAR: "こんにちは世界"
+    bash: 'echo "UNICODE_VAR=$UNICODE_VAR"'
+    expect-regex: UNICODE_VAR=こんにちは世界
+
+  - name: Circular reference
+    env:
+      VAR1: $(VAR2)_suffix
+      VAR2: $(VAR1)_suffix
+    bash: 'echo "VAR1=$VAR1"'
+    expect-regex: VAR1=\$\(VAR2\)_suffix
+
+- area: System variables
+  tests:
+  - name: Setting PATH variable
+    env:
+      PATH: /custom/path:$PATH
+    bash: |
+      echo PATH=$PATH
+    expect-regex: PATH=/custom/path:.*
+
+  - name: Setting system environment variables
+    env:
+      LANG: en_US.UTF-8
+      TZ: UTC
+    bash: |
+      echo "Locale: $LANG"
+      echo "Timezone: $TZ"
+    expect-regex: |
+      Locale: en_US.UTF-8
+      Timezone: UTC
+
+- area: Invalid
+  tests:
+  - name: Invalid environment variable name
+    env:
+      "INVALID-NAME": value
+    bash: echo "Test '$INVALID-NAME' is empty"
+    expect-regex: Test '-NAME' is empty
+    # Should handle or reject invalid env var names appropriately

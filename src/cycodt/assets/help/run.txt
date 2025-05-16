@@ -8,32 +8,17 @@ USAGE: cycodt run [...]
     --file FILE
     --files FILE1 [FILE2 [...]]
     --files PATTERN1 [PATTERN2 [...]]
+    --exclude-files PATTERN1 [PATTERN2 [...]]
 
   TESTS
     --test TEXT
     --tests TEXT1 [TEXT2 [...]]
-
-  FILTERING
     --contains TEXT1 [TEXT2 [...]]
     --remove TEXT1 [TEXT2 [...]]
 
   OUTPUT
     --output-file FILE
     --output-format trx|junit
-
-EXAMPLES
-
-  EXAMPLE 1: Runs all available tests
-
-    cycodt run
-
-  EXAMPLE 2: Run tests that contain 'setup' or 'nightly', and 'java', but not 'skip'
-
-    cycodt run --tests setup nightly --contains java --remove skip
-
-  EXAMPLE 3: Run tests from files under 'tests' directory, that contain 'test3', but not 'skip'
-
-    cycodt run --files ../tests/**/*.yaml --contains test3 --remove skip
 
 SEE ALSO
 

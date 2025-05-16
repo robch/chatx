@@ -1,0 +1,26 @@
+USAGE: cycodt expect check [...]
+   OR: cycodt expect format [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Use AI to check the output of a command
+
+    git status | cycodt expect check --instructions "branch should be 'main' or 'master'"
+
+  EXAMPLE 2: Use regular expressions to check the output of a command
+
+    git status | cycodt expect check --regex "On branch (main|master)"
+    git status | cycodt expect check --not-regex "Untracked files:"
+
+  EXAMPLE 3: Save strict regex from a command output to a file
+
+    git status | cycodt expect format --save-output git-status-clean.txt
+
+  EXAMPLE 4: Use regex patterns from a file to check the output of a command
+
+    git status | cycodt expect check --regex-file git-status-clean.txt
+
+SEE ALSO
+
+  cycodt help expect check
+  cycodt help expect format

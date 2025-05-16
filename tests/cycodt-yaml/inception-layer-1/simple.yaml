@@ -1,0 +1,14 @@
+﻿class: simple
+tests:
+- name: running simple process
+  command: cycod version
+
+- name: running simple script w/ regex expectation
+  script: echo hello
+  expect-regex: hello
+  optional: windows
+
+- name: running bash script w/ regex expectation
+  bash: echo hello
+  expect-regex: hello
+  optional: linux

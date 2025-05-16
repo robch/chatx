@@ -20,9 +20,9 @@ public class GitHubCopilotHelper
     {
         { "accept", "application/json" },
         { "editor-version", "Neovim/0.6.1" },
-        { "editor-plugin-version", "copilot.vim/1.16.0" },
+        { "editor-plugin-version", "copilot.vim/1.31.0" },
         { "content-type", "application/json" },
-        { "user-agent", "GithubCopilot/1.155.0" }
+        { "user-agent", "GithubCopilot/1.189.0" }
     };
 
     private readonly HttpClient _httpClient;

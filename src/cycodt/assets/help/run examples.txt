@@ -1,0 +1,21 @@
+USAGE: cycodt run [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Runs all available tests
+
+    cycodt run
+
+  EXAMPLE 2: Run tests that contain 'echo'
+
+    cycodt run --contains echo
+
+  EXAMPLE 3: Runs tests from files under 'tests' directory
+
+    cycodt run --files tests/**/*.yaml
+
+SEE ALSO
+
+  cycodt help run
+  cycodt help list examples
+  cycodt help expect examples

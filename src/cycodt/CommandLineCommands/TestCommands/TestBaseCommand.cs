@@ -1,25 +1,47 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
 abstract class TestBaseCommand : Command
 {
     public TestBaseCommand()
     {
-        Files = new List<string>();
+        Globs = new List<string>();
+        ExcludeGlobs = new List<string>();
+        ExcludeFileNamePatternList = new List<Regex>();
         Tests = new List<string>();
         Contains = new List<string>();
         Remove = new List<string>();
+        IncludeOptionalCategories = new List<string>();
     }
 
-    public List<string> Files { get; set; }
+    public List<string> Globs;
+    public List<string> ExcludeGlobs;
+    public List<Regex> ExcludeFileNamePatternList;
+
     public List<string> Tests { get; set; }
     public List<string> Contains { get; set; }
     public List<string> Remove { get; set; }
 
+    public List<string> IncludeOptionalCategories { get; set; }
+
     public override bool IsEmpty()
     {
         return false;
+    }
+
+    override public Command Validate()
+    {
+        var ignoreFile = FileHelpers.FindFileSearchParents(".cycodtignore");
+        if (ignoreFile != null)
+        {
+            FileHelpers.ReadIgnoreFile(ignoreFile, out var excludeGlobs, out var excludeFileNamePatternList);
+            ExcludeGlobs.AddRange(excludeGlobs);
+            ExcludeFileNamePatternList.AddRange(excludeFileNamePatternList);
+        }
+
+        return this;
     }
 
     protected IList<TestCase> FindAndFilterTests()
@@ -30,38 +52,28 @@ abstract class TestBaseCommand : Command
         var atLeastOneFileSpecified = files.Any();
         var tests = atLeastOneFileSpecified
             ? files.SelectMany(file => YamlTestFramework.GetTestsFromYaml("cycodt", file))
-            : YamlTestFramework.GetTestsFromDirectory("cycodt", new DirectoryInfo("."));
+            : Array.Empty<TestCase>();
 
-        var filtered = YamlTestCaseFilter.FilterTestCases(tests, filters).ToList();
-
-        if (tests.Count() == 0)
-        {
-            throw new Exception(!atLeastOneFileSpecified
-                ? "No tests found"
-                : files.Count() == 1
-                    ? $"No tests found in {files.Count()} file"
-                    : $"No tests found in {files.Count()} files");
-        }
-        
-        if (filtered.Count() == 0)
-        {
-            Console.WriteLine(atLeastOneFileSpecified
-                ? $"Found {tests.Count()} tests in {files.Count()} files\n"
-                : $"Found {tests.Count()} tests\n");
-
-            throw new Exception("No tests matching criteria.");
-        }
+        var withOrWithoutOptional = FilterOptionalTests(tests, IncludeOptionalCategories).ToList();
+        var filtered = YamlTestCaseFilter.FilterTestCases(withOrWithoutOptional, filters).ToList();
 
         return filtered;
     }
 
     protected List<FileInfo> FindTestFiles()
     {
-        var files = new List<FileInfo>();
-        foreach (var pattern in Files)
+        if (Globs.Count == 0)
         {
-            AddFindFiles(files, pattern);
+            var directory = YamlTestConfigHelpers.GetTestDirectory();
+            var globPattern = PathHelpers.Combine(directory.FullName, "**", "*.yaml")!;
+            Globs.Add(globPattern);
         }
+
+        var files = FileHelpers
+            .FindMatchingFiles(Globs, ExcludeGlobs, ExcludeFileNamePatternList)
+            .Select(x => new FileInfo(x))
+            .ToList();
+
         return files;
     }
 
@@ -77,6 +89,7 @@ abstract class TestBaseCommand : Command
 
     protected static IList<FileInfo> FindFiles(string pattern)
     {
+        ConsoleHelpers.WriteDebugLine($"Finding files with pattern: {pattern}");
         var files = FileHelpers.FindFiles(Directory.GetCurrentDirectory(), pattern);
         return files.Select(x => new FileInfo(x)).ToList();
     }
@@ -97,5 +110,27 @@ abstract class TestBaseCommand : Command
         }
 
         return filters;
+    }
+
+    private IEnumerable<TestCase> FilterOptionalTests(IEnumerable<TestCase> tests, List<string> includeOptionalCategories)
+    {
+        var excludeAllOptional = includeOptionalCategories.Count == 0;
+        if (excludeAllOptional) return tests.Where(test => !HasOptionalTrait(test));
+
+        var includeAllOptional = includeOptionalCategories.Count == 1 && string.IsNullOrEmpty(includeOptionalCategories[0]);
+        if (includeAllOptional) return tests;
+
+        return tests.Where(test => !HasOptionalTrait(test) || HasMatchingOptionalCategory(test, includeOptionalCategories));
+    }
+
+    private bool HasOptionalTrait(TestCase test)
+    {
+        return test.Traits.Any(t => t.Name == "optional");
+    }
+
+    private bool HasMatchingOptionalCategory(TestCase test, List<string> categories)
+    {
+        var optionalTraits = test.Traits.Where(t => t.Name == "optional").Select(t => t.Value);
+        return optionalTraits.Any(value => categories.Contains(value));
     }
 }

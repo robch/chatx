@@ -5,8 +5,11 @@ COMMANDS
   cycodt list [...]       Lists CLI YAML tests
   cycodt run [...]        Runs CLI YAML tests
 
+  cycodt expect [...]     Manage LLM and regex expectations
+
 ADDITIONAL TOPICS
 
-  cycodt help examples
   cycodt help list
   cycodt help run
+  cycodt help expect
+  cycodt help examples

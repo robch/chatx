@@ -1,0 +1,23 @@
+﻿class: simple3
+tests:
+
+- name: echo animals w/ expectation
+  bash: |
+    echo cat
+    echo dog
+    echo elephant
+    echo fox
+  expect-regex: |
+    cat
+    dog
+    elephant
+    fox
+
+- name: echo animals wo/ expectation
+  bash: |
+    echo cat
+    echo dog
+    echo elephant
+    echo fox
+  not-expect-regex:
+    dog

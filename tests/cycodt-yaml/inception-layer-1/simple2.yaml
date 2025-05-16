@@ -1,0 +1,9 @@
+﻿class: simple2
+tests:
+
+- name: output into file
+  bash: echo hello > hello.txt
+
+- name: checkout output into file
+  bash: cat hello.txt
+  expect-regex: hello

@@ -79,15 +79,7 @@ public class ConsoleHelpers
 
         lock (_printLock)
         {
-            var prevForegroundColor = Console.ForegroundColor;
-            if (foregroundColor != null) Console.ForegroundColor = (ConsoleColor)foregroundColor;
-
-            var prevBackgroundColor = Console.BackgroundColor;
-            if (backgroundColor != null) Console.BackgroundColor = (ConsoleColor)backgroundColor;
-
-            Console.Write(message);
-            if (foregroundColor != null) Console.ForegroundColor = prevForegroundColor;
-            if (backgroundColor != null) Console.BackgroundColor = prevBackgroundColor;
+            WriteWithColorWithoutScrollSmear(message, foregroundColor, backgroundColor);
         }
     }
 
@@ -99,21 +91,7 @@ public class ConsoleHelpers
     public static void WriteLine(string message, ConsoleColor? foregroundColor, ConsoleColor? backgroundColor, bool overrideQuiet = false)
     {
         if (_quiet && !overrideQuiet) return;
-
-        lock (_printLock)
-        {
-            DisplayStatusErase();
-
-            var prevForegroundColor = Console.ForegroundColor;
-            if (foregroundColor != null) Console.ForegroundColor = (ConsoleColor)foregroundColor;
-
-            var prevBackgroundColor = Console.BackgroundColor;
-            if (backgroundColor != null) Console.BackgroundColor = (ConsoleColor)backgroundColor;
-
-            Console.WriteLine(message);
-            if (foregroundColor != null) Console.ForegroundColor = prevForegroundColor;
-            if (backgroundColor != null) Console.BackgroundColor = prevBackgroundColor;
-        }
+        Write(message + '\n', foregroundColor, backgroundColor, overrideQuiet);
     }
 
     public static void WriteLineIfNotEmpty(string message)
@@ -179,7 +157,33 @@ public class ConsoleHelpers
 
         return _allLinesFromStdin;
     }
-    
+
+    private static void WriteWithColorWithoutScrollSmear(string message, ConsoleColor? foregroundColor, ConsoleColor? backgroundColor)
+    {
+        var lines = message
+            .Split(new[] { '\n' }, StringSplitOptions.None)
+            .Select(line => line.TrimEnd('\r'))
+            .ToArray();
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (i > 0) Console.WriteLine();
+            WriteWithColor(lines[i], foregroundColor, backgroundColor);
+        }
+    }
+
+    private static void WriteWithColor(string message, ConsoleColor? foregroundColor, ConsoleColor? backgroundColor)
+    {
+        var prevForegroundColor = Console.ForegroundColor;
+        if (foregroundColor != null) Console.ForegroundColor = (ConsoleColor)foregroundColor;
+
+        var prevBackgroundColor = Console.BackgroundColor;
+        if (backgroundColor != null) Console.BackgroundColor = (ConsoleColor)backgroundColor;
+
+        Console.Write(message);
+        if (foregroundColor != null) Console.ForegroundColor = prevForegroundColor;
+        if (backgroundColor != null) Console.BackgroundColor = prevBackgroundColor;
+    }
+   
     private static bool _debug = false;
     private static bool _verbose = false;
     private static bool _quiet = false;

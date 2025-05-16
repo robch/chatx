@@ -73,8 +73,8 @@ public class ChatCommand : CommandWithVariables
         factory.AddFunctions(new CodeExplorationHelperFunctions());
 
         // Create the chat completions object with the external ChatClient and system prompt.
-        var chatClient = ChatClientFactory.CreateChatClient();
-        var chat = new FunctionCallingChat(chatClient, SystemPrompt, factory, MaxOutputTokens);
+        var chatClient = ChatClientFactory.CreateChatClient(out var options);
+        var chat = new FunctionCallingChat(chatClient, SystemPrompt, factory, options, MaxOutputTokens);
 
         try
         {

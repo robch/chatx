@@ -179,19 +179,7 @@ public class CycoDmdCommandLineOptions : CommandLineOptions
         else if (arg == "--exclude")
         {
             var patterns = GetInputOptionArgs(i + 1, args);
-            if (patterns.Count() == 0)
-            {
-                throw new CommandLineException($"Missing patterns for {arg}");
-            }
-
-            var containsSlash = (string x) => x.Contains('/') || x.Contains('\\');
-            var asRegExs = patterns
-                .Where(x => !containsSlash(x))
-                .Select(x => ValidateFilePatternToRegExPattern(arg, x));
-            var asGlobs = patterns
-                .Where(x => containsSlash(x))
-                .ToList();
-
+            ValidateExcludeRegExAndGlobPatterns(arg, patterns, out var asRegExs, out var asGlobs);
             command.ExcludeFileNamePatternList.AddRange(asRegExs);
             command.ExcludeGlobs.AddRange(asGlobs);
             i += patterns.Count();

@@ -44,10 +44,14 @@ public class YamlEnvHelpers
         return GetEnvironmentFromMultiLineString(content);
     }
 
-    public static Dictionary<string, string> GetEnvironmentFromMultiLineString(string content)
+    public static Dictionary<string, string> GetEnvironmentFromMultiLineString(string? content)
     {
-        var lines = content.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-        return lines
+        var lines = content?.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        var noEnv = lines == null || lines.Length == 0;
+        if (noEnv) return new Dictionary<string, string>();
+
+        return lines!
             .Select(line => line.Split(new[] { '=' }, 2))
             .ToDictionary(parts => parts[0], parts => parts[1]);
     }

@@ -33,7 +33,11 @@ class Program
             }
         }
 
-        ConsoleHelpers.Configure(commandLineOptions!.Debug, commandLineOptions.Verbose, commandLineOptions.Quiet);
+        var debug = ConsoleHelpers.IsDebug() || commandLineOptions!.Debug;
+        var verbose = ConsoleHelpers.IsVerbose() || commandLineOptions!.Verbose;
+        var quiet = ConsoleHelpers.IsQuiet() || commandLineOptions!.Quiet;
+        ConsoleHelpers.Configure(debug, verbose, quiet);
+
         BingApiWebSearchHelpers.ConfigureEndpoint(
             EnvironmentHelpers.FindEnvVar("BING_SEARCH_V7_ENDPOINT", searchDotEnvFile: true),
             EnvironmentHelpers.FindEnvVar("BING_SEARCH_V7_KEY", searchDotEnvFile: true));
@@ -47,7 +51,7 @@ class Program
             EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_CHAT_DEPLOYMENT", searchDotEnvFile: true),
             EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_SYSTEM_PROMPT", searchDotEnvFile: true));
 
-        var helpCommand = commandLineOptions.Commands.OfType<HelpCommand>().FirstOrDefault();
+        var helpCommand = commandLineOptions!.Commands.OfType<HelpCommand>().FirstOrDefault();
         if (helpCommand != null)
         {
             DisplayBanner();
@@ -351,15 +355,18 @@ class Program
             {
                 RunCommand.ScriptType.Cmd => "cmd",
                 RunCommand.ScriptType.Bash => "bash",
-                RunCommand.ScriptType.PowerShell => "powershell",
-                _ => null
+                RunCommand.ScriptType.PowerShell => "pwsh",
+                _ => OS.IsWindows() ? "cmd" : "bash",
             };
 
-            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell);
-            var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
+            var result = await ProcessHelpers.RunShellScriptAsync(shell, script);
+            var output = result.MergedOutput;
+            var exitCode = result.ExitCode;
 
             var isMultiLine = script.Contains("\n");
             var header = isMultiLine ? "## Run\n\n" : $"## `{script}`\n\n";
+
+            var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
             var scriptPart = isMultiLine ? $"Run:\n{backticks}\n{script.TrimEnd()}\n{backticks}\n\n" : string.Empty;
             var outputPart = $"Output:\n{backticks}\n{output.TrimEnd()}\n{backticks}\n\n";
             var exitCodePart = exitCode != 0 ? $"Exit code: {exitCode}\n\n" : string.Empty;

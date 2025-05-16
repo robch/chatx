@@ -3,35 +3,35 @@
   - name: Config List (all scopes)
     command: cycod config list
     expect-regex: |
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(global\)
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(user\)
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(local\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(global\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(user\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(local\)
   
   - name: Config List (local scope only)
     command: cycod config list --local
     expect-regex: |
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(local\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(local\)
 
   - name: Config List (user scope only)
     command: cycod config list --user
     expect-regex: |
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(user\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(user\)
 
   - name: Config List (global scope only)
     command: cycod config list --global
     expect-regex: |
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(global\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(global\)
 
   - name: Config Set (local scope)
     command: cycod config set TestKey TestValue --local
     expect-regex: |
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(local\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(local\)
       TestKey: TestValue
 
   - name: Config Get (local scope)
     command: cycod config get TestKey --local
     expect-regex: |
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(local\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(local\)
       TestKey: TestValue
 
   - name: Config Clear (local scope)
@@ -55,7 +55,7 @@
   - name: Config Get List Value (local scope)
     command: cycod config get TestList --local
     expect-regex: |
-      LOCATION: .*\\\.cycod\\config(\.yaml){0,1} \(local\)
+      LOCATION: .*[\\/]\.cycod[\\/]config(\.yaml){0,1} \(local\)
       TestList:
         - TestItem1
         - TestItem2

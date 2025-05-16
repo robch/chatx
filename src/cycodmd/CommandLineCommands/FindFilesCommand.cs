@@ -51,10 +51,12 @@ class FindFilesCommand : CycoDmdCommand
             Globs.Add("**");
         }
 
-        var cycoDmdIgnoreFile = FileHelpers.FindFileSearchParents(".cycodmdignore");
-        if (cycoDmdIgnoreFile != null)
+        var ignoreFile = FileHelpers.FindFileSearchParents(".cycodmdignore");
+        if (ignoreFile != null)
         {
-            AddExclusions(cycoDmdIgnoreFile);
+            FileHelpers.ReadIgnoreFile(ignoreFile, out var excludeGlobs, out var excludeFileNamePatternList);
+            ExcludeGlobs.AddRange(excludeGlobs);
+            ExcludeFileNamePatternList.AddRange(excludeFileNamePatternList);
         }
 
         return this;
@@ -76,21 +78,4 @@ class FindFilesCommand : CycoDmdCommand
     public List<Tuple<string, string>> FileInstructionsList;
 
     public string? SaveFileOutput;
-
-    private void AddExclusions(string cycoDmdIgnoreFile)
-    {
-        var lines = File.ReadAllLines(cycoDmdIgnoreFile);
-        foreach (var line in lines)
-        {
-            var assumeIsGlob = line.Contains('/') || line.Contains('\\');
-            if (assumeIsGlob)
-            {
-                ExcludeGlobs.Add(line);
-            }
-            else
-            {
-                ExcludeFileNamePatternList.Add(new Regex(line));
-            }
-        }
-    }
 }

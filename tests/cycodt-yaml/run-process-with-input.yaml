@@ -1,0 +1,29 @@
+class: process-input
+tag: cycod
+tests:
+- name: /file README.md
+  command: cycod chat --inputs @@-
+  workingDirectory: testfiles
+  input: |
+    /file README.md
+    exit
+  expect-regex: |
+    ^\r?$\n
+    ^User: /file README\.md\r?$\n
+    ^\r?$\n
+    ^user-function: /file => \.\.\.\r?$\n
+    ^user-function: /file => ## README\.md\r?$\n
+    ^\r?$\n
+    ^Modified: .*\r?$\n
+    ^Size: .*\r?$\n
+    ^\r?$\n
+    ^```markdown\r?$\n
+    ^# README\.md\r?$\n
+    ^\r?$\n
+    ^This is an example README\.md\r?$\n
+    ^\r?$\n
+    ^```\r?$\n
+    ^\r?$\n
+    ^User: \r?$\n
+    ^User: exit\r?$\n
+

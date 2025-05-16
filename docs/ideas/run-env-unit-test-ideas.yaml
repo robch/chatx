@@ -1,0 +1,11 @@
+- name: Run Environment Variable Unit Tests
+  command: cycodt run --file env-simple-tests.yaml
+  expect-regex: |
+    Found \d+ tests...
+    
+    .*TEST RESULT SUMMARY:
+    
+    Passed: \d+ \(100\.0\%\)
+    
+    Tests: \d+ \(.*\)
+    Results: .*

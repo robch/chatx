@@ -42,11 +42,17 @@ public class YamlTagHelpers
     {
         var tagNode = mapping.Children.ContainsKey("tag") ? mapping.Children["tag"] : null;
         var tagsNode = mapping.Children.ContainsKey("tags") ? mapping.Children["tags"] : null;
-        if (tagNode == null && tagsNode == null) return tags;
+        var optionalNode = mapping.Children.ContainsKey("optional") ? mapping.Children["optional"] : null;
+        
+        if (tagNode == null && tagsNode == null && optionalNode == null) return tags;
+        tags = UpdateCopyTags(tags, tagNode, tagsNode);
 
-        return UpdateCopyTags(tags, tagNode, tagsNode);
+        var updateOptionalTag = optionalNode != null;
+        if (updateOptionalTag) tags = AddOptionalTag(tags, optionalNode!);
+        
+        return tags;
     }
-
+    
     private static Dictionary<string, List<string>> UpdateCopyTags(Dictionary<string, List<string>> tags, YamlNode? tagNode, YamlNode? tagsNode)
     {
         // make a copy that we'll update and return
@@ -61,6 +67,39 @@ public class YamlTagHelpers
         AddOptionalNameValueTags(tags, tagsNode as YamlMappingNode);
         AddOptionalTagsForEachChild(tags, tagsNode as YamlSequenceNode);
 
+        return tags;
+    }
+
+    private static Dictionary<string, List<string>> AddOptionalTag(Dictionary<string, List<string>> tags, YamlNode optionalNode)
+    {
+        tags = new Dictionary<string, List<string>>(tags);
+        
+        if (optionalNode is YamlScalarNode scalarNode)
+        {
+            var value = scalarNode.Value;
+            if (!string.IsNullOrEmpty(value))
+            {
+                AddOptionalTag(tags, "optional", value);
+            }
+            return tags;
+        }
+        
+        if (optionalNode is YamlSequenceNode sequenceNode)
+        {
+            foreach (var item in sequenceNode.Children)
+            {
+                if (item is YamlScalarNode itemScalar)
+                {
+                    var value = itemScalar.Value;
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        AddOptionalTag(tags, "optional", value);
+                    }
+                }
+            }
+            return tags;
+        }
+        
         return tags;
     }
 

@@ -17,12 +17,31 @@ class TestListCommand : TestBaseCommand
             Logger.Log(new CycoDtTestFrameworkLogger());
             var tests = FindAndFilterTests();
             
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            foreach (var test in tests)
+            if (ConsoleHelpers.IsVerbose())
             {
-                Console.WriteLine(test.FullyQualifiedName);
+                var grouped = tests
+                    .GroupBy(t => t.CodeFilePath)
+                    .OrderBy(g => g.Key)
+                    .ToList();
+                for (var i = 0; i < grouped.Count; i++)
+                {
+                    if (i > 0) ConsoleHelpers.WriteLine();
+
+                    var group = grouped[i];
+                    ConsoleHelpers.WriteLine($"{group.Key}\n", ConsoleColor.DarkGray);
+                    foreach (var test in group)
+                    {
+                        ConsoleHelpers.WriteLine($"  {test.FullyQualifiedName}", ConsoleColor.DarkGray);
+                    }
+                }
             }
-            Console.ResetColor();
+            else
+            {
+                foreach (var test in tests)
+                {
+                    ConsoleHelpers.WriteLine(test.FullyQualifiedName, ConsoleColor.DarkGray);
+                }
+            }
 
             Console.WriteLine(tests.Count() == 1
                 ? $"\nFound {tests.Count()} test..."

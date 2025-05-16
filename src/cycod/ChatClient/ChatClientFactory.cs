@@ -1,3 +1,4 @@
+using Anthropic.SDK;
 using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.AI;
@@ -9,6 +10,23 @@ using System.ClientModel.Primitives;
 
 public static class ChatClientFactory
 {
+    public static IChatClient? CreateAnthropicChatClientWithApiKey(out ChatOptions? options)
+    {
+        var model = EnvironmentHelpers.FindEnvVar("ANTHROPIC_MODEL_NAME") ?? "claude-3-7-sonnet-latest";
+        var apiKey = EnvironmentHelpers.FindEnvVar("ANTHROPIC_API_KEY") ?? throw new EnvVarSettingException("ANTHROPIC_API_KEY is not set.");
+
+        var chatClient = new AnthropicClient(apiKey).Messages;
+        options = new ChatOptions
+        {
+            ModelId = model,
+            ToolMode = ChatToolMode.Auto,
+            MaxOutputTokens = 4000
+        };
+        
+        ConsoleHelpers.WriteDebugLine("Using Anthropic API key for authentication");
+        return chatClient;
+    }
+
     public static IChatClient CreateAzureOpenAIChatClientWithApiKey()
     {
         var deployment = EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_CHAT_DEPLOYMENT") ?? throw new EnvVarSettingException("AZURE_OPENAI_CHAT_DEPLOYMENT is not set.");
@@ -19,7 +37,7 @@ public static class ChatClientFactory
         var chatClient = client.GetChatClient(deployment);
 
         ConsoleHelpers.WriteDebugLine("Using Azure OpenAI API key for authentication");
-        return chatClient.AsChatClient();
+        return chatClient.AsIChatClient();
     }
 
     public static IChatClient CreateOpenAIChatClientWithApiKey()
@@ -30,7 +48,7 @@ public static class ChatClientFactory
         var chatClient = new ChatClient(model, new ApiKeyCredential(apiKey), InitOpenAIClientOptions());
         
         ConsoleHelpers.WriteDebugLine("Using OpenAI API key for authentication");
-        return chatClient.AsChatClient();
+        return chatClient.AsIChatClient();
     }
 
     public static IChatClient CreateCopilotChatClientWithGitHubToken()
@@ -72,14 +90,14 @@ public static class ChatClientFactory
         var chatClient = new ChatClient(model, new ApiKeyCredential(" "), options);
         
         ConsoleHelpers.WriteDebugLine("Using GitHub Copilot token for authentication (with auto-refresh)");
-        return chatClient.AsChatClient();
+        return chatClient.AsIChatClient();
     }
 
-    private static IChatClient? TryCreateChatClientFromPreferredProvider()
+    private static IChatClient? TryCreateChatClientFromPreferredProvider(out ChatOptions? options)
     {
-        // Check for explicit provider preference from configuration or environment variables
         var preferredProvider = ConfigStore.Instance.GetFromAnyScope(KnownSettings.AppPreferredProvider).AsString()?.ToLowerInvariant();
         
+        options = null;
         if (!string.IsNullOrEmpty(preferredProvider))
         {
             ConsoleHelpers.WriteDebugLine($"Using preferred provider: {preferredProvider}");
@@ -88,6 +106,10 @@ public static class ChatClientFactory
             if ((preferredProvider == "copilot-github" || preferredProvider == "copilot") && !string.IsNullOrEmpty(EnvironmentHelpers.FindEnvVar("GITHUB_TOKEN")))
             {
                 return CreateCopilotChatClientWithGitHubToken();
+            }
+            else if (preferredProvider == "anthropic" && !string.IsNullOrEmpty(EnvironmentHelpers.FindEnvVar("ANTHROPIC_API_KEY")))
+            {
+                return CreateAnthropicChatClientWithApiKey(out options);
             }
             else if ((preferredProvider == "azure-openai" || preferredProvider == "azure") && !string.IsNullOrEmpty(EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_API_KEY")))
             {
@@ -105,14 +127,20 @@ public static class ChatClientFactory
         
         return null;
     }
-    
-    private static IChatClient? TryCreateChatClientFromEnv()
+
+    private static IChatClient? TryCreateChatClientFromEnv(out ChatOptions? options)
     {
         ConsoleHelpers.WriteDebugLine("Creating chat client from environment variables...");
+        options = null;
 
         if (!string.IsNullOrEmpty(EnvironmentHelpers.FindEnvVar("GITHUB_TOKEN")))
         {
             return CreateCopilotChatClientWithGitHubToken();
+        }
+
+        if (!string.IsNullOrEmpty(EnvironmentHelpers.FindEnvVar("ANTHROPIC_API_KEY")))
+        {
+            return CreateAnthropicChatClientWithApiKey(out options);
         }
         
         if (!string.IsNullOrEmpty(EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_API_KEY")))
@@ -128,13 +156,13 @@ public static class ChatClientFactory
         return null;
     }
 
-    public static IChatClient CreateChatClient()
+    public static IChatClient CreateChatClient(out ChatOptions? options)
     {
         // First try to create client from preferred provider
-        var client = TryCreateChatClientFromPreferredProvider();
+        var client = TryCreateChatClientFromPreferredProvider(out options);
         
         // If that fails, try to create from environment variables
-        client ??= TryCreateChatClientFromEnv();
+        client ??= TryCreateChatClientFromEnv(out options);
         
         // If no client could be created, throw an exception with helpful message
         if (client == null)
@@ -143,14 +171,18 @@ public static class ChatClientFactory
                 string.Join('\n',
                     @"No valid environment variables found.
 
-                    To use OpenAI, please set:
-                    - OPENAI_API_KEY
-                    - OPENAI_CHAT_MODEL_NAME (optional)
+                    To use Anthropic, please set:
+                    - ANTHROPIC_API_KEY
+                    - ANTHROPIC_MODEL_NAME (optional)
 
                     To use Azure OpenAI, please set:
                     - AZURE_OPENAI_API_KEY
                     - AZURE_OPENAI_ENDPOINT
                     - AZURE_OPENAI_CHAT_DEPLOYMENT
+
+                    To use OpenAI, please set:
+                    - OPENAI_API_KEY
+                    - OPENAI_CHAT_MODEL_NAME (optional)
 
                     To use GitHub Copilot with token authentication, please set:
                     - GITHUB_TOKEN

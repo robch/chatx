@@ -1,0 +1,93 @@
+class: run-tests
+tag: inception
+tests:
+- name: cycodt run simple.yaml
+  command: cycodt run --file simple.yaml --output-file test-results-simple.trx
+  expect-regex: |
+    Found 1 test...
+
+    Starting test: yaml.simple.simple.running simple process
+    Passed \(.*\): yaml.simple.simple.running simple process
+
+    TEST RESULT SUMMARY:
+
+    Passed: 1 \(100.0%\)
+
+    Tests: 1
+    Results: .*[\\/]tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]test-results-simple.trx
+
+- name: cycodt run simple.yaml w/ all optional
+  command: cycodt run --file simple.yaml --include-optional --output-file test-results-simple-optional.trx
+  expect-regex: |
+    Found 3 tests...
+
+    Starting test: yaml.simple.simple.running simple process
+    Passed \(.*\): yaml.simple.simple.running simple process
+    Starting test: yaml.simple.simple.running simple script w/ regex expectation
+    Passed \(.*\): yaml.simple.simple.running simple script w/ regex expectation
+    Starting test: yaml.simple.simple.running bash script w/ regex expectation
+    Passed \(.*\): yaml.simple.simple.running bash script w/ regex expectation
+
+    TEST RESULT SUMMARY:
+
+    Passed: 3 \(100.0%\)
+
+    Tests: 3
+    Results: .*[\\/]tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]test-results-simple-optional.trx
+
+- name: cycodt run simple2.yaml
+  command: cycodt run --file simple2.yaml --output-file test-results-simple2.trx
+  expect-regex: |
+    Found 2 tests...
+
+    Starting test: yaml.simple2.simple2.output into file
+    Passed \(.*\): yaml.simple2.simple2.output into file
+    Starting test: yaml.simple2.simple2.checkout output into file
+    Passed \(.*\): yaml.simple2.simple2.checkout output into file
+
+    TEST RESULT SUMMARY:
+
+    Passed: 2 \(100.0%\)
+
+    Tests: 2
+    Results: .*[\\/]tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]test-results-simple2.trx
+
+- name: check simple2.yaml file output
+  workingDirectory: ../testresults
+  command: cat hello.txt
+  expect-regex: hello
+
+- name: cycodt run simple3.yaml
+  command: cycodt run --file simple3.yaml --output-file test-results-simple3.trx
+  expect-regex: |
+    ^Found 2 tests...\r?$\n
+    ^\r?$\n
+    ^Starting test: yaml.simple3.simple3.echo animals w/ expectation\r?$\n
+    ^Passed \(.*\): yaml.simple3.simple3.echo animals w/ expectation\r?$\n
+    ^Starting test: yaml.simple3.simple3.echo animals wo/ expectation\r?$\n
+    ^UNEXPECTED: Found 'dog' in 'dog'\r?$\n
+    ^Failed \(.*\): yaml.simple3.simple3.echo animals wo/ expectation\r?$\n
+    ^at .*tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]simple3.yaml\(\d+\)\r?$\n
+    ^echo cat\r?$\n
+    ^echo dog\r?$\n
+    ^echo elephant\r?$\n
+    ^echo fox\r?$\n
+    ^EXIT CODE: 0\r?$\n
+    ^\r?$\n
+    ^\r?$\n
+    ^FAILURE SUMMARY:\r?$\n
+    ^Failed \(.*\): yaml.simple3.simple3.echo animals wo/ expectation\r?$\n
+    ^at .*tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]simple3.yaml\(\d+\)\r?$\n
+    ^echo cat\r?$\n
+    ^echo dog\r?$\n
+    ^echo elephant\r?$\n
+    ^echo fox\r?$\n
+    ^EXIT CODE: 0\r?$\n
+    ^\r?$\n
+    ^TEST RESULT SUMMARY:\r?$\n
+    ^\r?$\n
+    ^Passed: 1 \(50.0%\)\r?$\n
+    ^Failed: 1 \(50.0%\)\r?$\n
+    ^\r?$\n
+    ^Tests: 2 \(.*\)\r?$\n
+    ^Results: .*[\\/]tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]test-results-simple3.trx\r?$\n

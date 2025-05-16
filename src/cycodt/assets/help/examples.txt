@@ -1,33 +1,24 @@
 USAGE: cycodt list [...]
-   OR: cycodt list
+   OR: cycodt run [...]
+   OR: cycodt expect [...]
 
 EXAMPLES
 
-  EXAMPLE 1: Lists all available tests
+  EXAMPLE 1: Lists tests that contain 'echo'
 
-    cycodt test list
+    cycodt list --contains echo
 
-  EXAMPLE 2: Lists tests from files under current directory, that contain 'setup' or 'nightly', and 'java', but not 'skip'
+  EXAMPLE 2: Runs tests that contain 'echo'
 
-    cycodt test list --tests setup nightly --contains java --remove skip
+    cycodt run --contains echo
 
-  EXAMPLE 3: Lists tests from files under 'tests' directory, that contain 'test3', but not 'skip'
+  EXAMPLE 3: Use AI to check the output of a command
 
-    cycodt test list --files ../tests/**/*.yaml --contains test3 --remove skip
-
-  EXAMPLE 4: Runs all available tests
-
-    cycodt run
-
-  EXAMPLE 5: Run tests that contain 'setup' or 'nightly', and 'java', but not 'skip'
-
-    cycodt run --tests setup nightly --contains java --remove skip
-
-  EXAMPLE 6: Run tests from files under 'tests' directory, that contain 'test3', but not 'skip'
-
-    cycodt run --files ../tests/**/*.yaml --contains test3 --remove skip
+    git status | cycodt expect check --instructions "branch should be 'main' or 'master'"
 
 SEE ALSO
 
-  cycodt help list
-  cycodt help run
+  cycodt help list examples
+  cycodt help run examples
+  cycodt help expect examples
+  cycodt help usage

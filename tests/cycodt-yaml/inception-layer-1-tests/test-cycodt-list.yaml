@@ -1,0 +1,55 @@
+class: output-tests
+tag: inception
+tests:
+- name: cycodt list
+  command: cycodt list --file simple.yaml
+  expect-regex: |
+    yaml.simple.simple.running simple process
+    Found 1 test...
+
+- name: cycodt list w/optional windows
+  command: cycodt list --files simple.yaml --include-optional windows
+  expect-regex: |
+    yaml.simple.simple.running simple process
+    yaml.simple.simple.running simple script w/ regex expectation
+    Found 2 tests...
+
+- name: cycodt list w/optional linux
+  command: cycodt list --files simple.yaml --include-optional linux
+  expect-regex: |
+    yaml.simple.simple.running simple process
+    yaml.simple.simple.running bash script w/ regex expectation
+    Found 2 tests...
+    
+- name: cycodt list w/optional all
+  command: cycodt list --files simple.yaml --include-optional
+  expect-regex: |
+    yaml.simple.simple.running simple process
+    yaml.simple.simple.running simple script w/ regex expectation
+    yaml.simple.simple.running bash script w/ regex expectation
+    Found 3 tests...
+
+- name: cycodt list all files, excluding simple2 and simple3
+  command: cycodt list --files simple*yaml --exclude-files simple2.yaml simple3.yaml
+  expect-regex: |
+    yaml.simple.simple.running simple process
+    Found 1 test...
+
+- name: cycodt list all files, verbosely
+  command: cycodt list --files simple*.yaml --include-optional --verbose
+  expect-regex: |
+    ^.*[\\/]tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]simple.yaml\r?$\n
+    ^\r?$\n
+    ^  yaml.simple.simple.running simple process\r?$\n
+    ^  yaml.simple.simple.running simple script w/ regex expectation\r?$\n
+    ^  yaml.simple.simple.running bash script w/ regex expectation\r?$\n
+    ^\r?$\n
+    ^.*[\\/]tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]simple2.yaml\r?$\n
+    ^\r?$\n
+    ^  yaml.simple2.simple2.output into file\r?$\n
+    ^  yaml.simple2.simple2.checkout output into file\r?$\n
+    ^\r?$\n
+    ^.*[\\/]tests[\\/]cycodt-yaml[\\/]inception-layer-1[\\/]simple3.yaml\r?$\n
+    ^\r?$\n
+    ^  yaml.simple3.simple3.echo animals w/ expectation\r?$\n
+    ^  yaml.simple3.simple3.echo animals wo/ expectation\r?$\n

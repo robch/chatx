@@ -3,7 +3,7 @@ using System.Text.Json;
 
 public class FunctionCallingChat : IAsyncDisposable
 {
-    public FunctionCallingChat(IChatClient chatClient, string systemPrompt, FunctionFactory factory, int? maxOutputTokens = null)
+    public FunctionCallingChat(IChatClient chatClient, string systemPrompt, FunctionFactory factory, ChatOptions? options, int? maxOutputTokens = null)
     {
         _systemPrompt = systemPrompt;
         _functionFactory = factory;
@@ -17,8 +17,12 @@ public class FunctionCallingChat : IAsyncDisposable
         _messages = new List<ChatMessage>();
         _options = new ChatOptions()
         {
+            ModelId = options?.ModelId,
+            ToolMode = options?.ToolMode,
             Tools = _functionFactory.GetAITools().ToList(),
-            ToolMode = null
+            MaxOutputTokens = maxOutputTokens.HasValue
+                ? maxOutputTokens.Value
+                : options?.MaxOutputTokens,
         };
 
         if (maxOutputTokens.HasValue) _options.MaxOutputTokens = maxOutputTokens.Value;

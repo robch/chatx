@@ -1,0 +1,89 @@
+class: slash-commands
+tag: cycod
+tests:
+- name: /file README.md
+  command: cycod --input "/file README.md" --input exit
+  workingDirectory: testfiles
+  expect-regex: |
+    ^\r?$\n
+    ^User: /file README\.md\r?$\n
+    ^\r?$\n
+    ^user-function: /file => \.\.\.\r?$\n
+    ^user-function: /file => ## README\.md\r?$\n
+    ^\r?$\n
+    ^Modified: .*\r?$\n
+    ^Size: .*\r?$\n
+    ^\r?$\n
+    ^```markdown\r?$\n
+    ^# README\.md\r?$\n
+    ^\r?$\n
+    ^This is an example README\.md\r?$\n
+    ^\r?$\n
+    ^```\r?$\n
+    ^\r?$\n
+    ^User: \r?$\n
+    ^User: exit\r?$\n
+
+- name: /files README.md
+  command: cycod --input "/files README.md" --input exit
+  workingDirectory: testfiles
+  expect-regex: |
+    ^\r?\n
+    ^User: /files README\.md\r?$\n
+    ^\r?$\n
+    ^user-function: /files => \.\.\.\r?$\n
+    ^user-function: /files => ## README\.md\r?$\n
+    ^\r?$\n
+    ^Modified: .*\r?$\n
+    ^Size: .*\r?$\n
+    ^\r?$\n
+    ^```markdown\r?$\n
+    ^# README\.md\r?$\n
+    ^\r?$\n
+    ^This is an example README\.md\r?$\n
+    ^\r?$\n
+    ^```\r?$\n
+    ^\r?$\n
+    ^User: \r?$\n
+    ^User: exit\r?$\n
+
+- name: /find README.md
+  command: cycod --input "/find README.md" --input exit
+  workingDirectory: testfiles
+  expect-regex: |
+    ^\r?\n
+    ^User: /find README\.md\r?$\n
+    ^\r?$\n
+    ^user-function: /find => \.\.\.\r?$\n
+    ^user-function: /find => ## README\.md\r?$\n
+    ^\r?$\n
+    ^Modified: .*\r?$\n
+    ^Size: .*\r?$\n
+    ^\r?$\n
+    ^```markdown\r?$\n
+    ^# README\.md\r?$\n
+    ^\r?$\n
+    ^This is an example README\.md\r?$\n
+    ^\r?$\n
+    ^```\r?$\n
+    ^\r?$\n
+    ^User: \r?$\n
+    ^User: exit\r?$\n
+
+- name: /run echo hi
+  command: cycod --input "/run echo hi" --input exit
+  workingDirectory: testfiles
+  expect-regex: |
+    ^\r?$\n
+    ^User: /run echo hi\r?$\n
+    ^\r?$\n
+    ^user-function: /run => \.\.\.\r?$\n
+    ^user-function: /run => ## `echo hi`\r?$\n
+    ^\r?$\n
+    ^Output:\r?$\n
+    ^```\r?$\n
+    ^hi\r?$\n
+    ^```\r?$\n
+    ^\r?$\n
+    ^User: \r?$\n
+    ^User: exit\r?$\n

@@ -1,0 +1,23 @@
+CYCODT EXPECT
+
+  The cycodt expect manages LLM and regex expectations.
+  
+USAGE: cycodt expect check [...]
+   OR: cycodt expect format [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Use AI to check the output of a command
+
+    git status | cycodt expect check --instructions "branch should be 'main' or 'master'"
+
+  EXAMPLE 2: Save strict regex from a command output to a file, and then use to check output
+
+    git status | cycodt expect format --save-output git-status-clean.txt
+    git status | cycodt expect check --regex-file git-status-clean.txt
+
+SEE ALSO
+
+  cycodt help expect check
+  cycodt help expect format
+  cycodt help usage

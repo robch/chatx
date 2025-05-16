@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,91 +16,52 @@ public class CycoDmdCliWrapper
     /// <returns>The command output as a string</returns>
     public async Task<string> ExecuteCycoDmdCommandAsync(string arguments, int timeoutMs = 120000)
     {
-        var stdoutBuffer = new StringBuilder();
-        var stderrBuffer = new StringBuilder();
-        var mergedBuffer = new StringBuilder();
-
         try
         {
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "cycodmd",
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                    CreateNoWindow = true
-                }
-            };
-
             if (ConsoleHelpers.IsVerbose())
             {
-                ConsoleHelpers.WriteLine($"Executing CYCODMD command: {process.StartInfo.FileName} {process.StartInfo.Arguments}");
+                ConsoleHelpers.WriteLine($"Executing CYCODMD command: cycodmd {arguments}");
             }
 
-            process.OutputDataReceived += (sender, e) => {
-                if (e.Data != null)
-                {
-                    var line = e.Data.TrimEnd(new char[] { '\r', '\n' });
-                    if (ConsoleHelpers.IsVerbose())
-                    {
-                        ConsoleHelpers.WriteLine(line, ConsoleColor.DarkMagenta);
-                    }
-                    stdoutBuffer.AppendLine(line);
-                    mergedBuffer.AppendLine(line);
-                }
-            };
+            // Create a process builder to execute the cycodmd command
+            var processBuilder = new RunnableProcessBuilder()
+                .WithFileName("cycodmd")
+                .WithArguments(arguments)
+                .WithTimeout(timeoutMs)
+                .WithVerboseLogging(ConsoleHelpers.IsVerbose());
 
-            process.ErrorDataReceived += (sender, e) => {
-                if (e.Data != null)
-                {
-                    var line = e.Data.TrimEnd(new char[] { '\r', '\n' });
-                    if (ConsoleHelpers.IsVerbose())
-                    {
-                        ConsoleHelpers.WriteErrorLine(line);
-                    }
-                    stderrBuffer.AppendLine(e.Data);
-                    mergedBuffer.AppendLine(e.Data);
-                }
-            };
-
-            process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-
-            using (var cts = new CancellationTokenSource())
+            // Add callbacks if verbose logging is enabled
+            if (ConsoleHelpers.IsVerbose())
             {
-                var timeoutTask = Task.Delay(timeoutMs, cts.Token);
-                var processExitTask = Task.Run(() => process.WaitForExit());
+                processBuilder.OnOutput(line => {
+                    var trimmedLine = line.TrimEnd(new char[] { '\r', '\n' });
+                    ConsoleHelpers.WriteLine(trimmedLine, ConsoleColor.DarkMagenta);
+                });
                 
-                var completedTask = await Task.WhenAny(processExitTask, timeoutTask);
-                if (completedTask == timeoutTask)
-                {
-                    try { process.Kill(); } catch { }
-                    return $"<waiting {timeoutMs}ms for cycodmd to finish, timed out>\n{mergedBuffer}";
-                }
-                
-                cts.Cancel(); // Cancel the timeout task
-                process.WaitForExit();
-                
-                var output = mergedBuffer.ToString().TrimEnd();
-                if (process.ExitCode != 0)
-                {
-                    output += Environment.NewLine + $"<cycodmd command exited with code {process.ExitCode}>";
-                }
-                
-                return output;
+                processBuilder.OnError(line => {
+                    var trimmedLine = line.TrimEnd(new char[] { '\r', '\n' });
+                    ConsoleHelpers.WriteErrorLine(trimmedLine);
+                });
             }
-        }
-        catch (Exception ex)
-        {
-            return $"<cycodmd command exited with error: {ex.Message}>";
-        }
-        finally 
-        {
+
+            // Run the process and get the result
+            var result = await processBuilder.RunAsync();
+
+            string output = result.MergedOutput.TrimEnd();
+            
+            // Add exit code message if not successful
+            if (result.ExitCode != 0)
+            {
+                output += Environment.NewLine + $"<cycodmd command exited with code {result.ExitCode}>";
+            }
+            
+            // Handle the case where the process timed out
+            if (result.CompletionState == ProcessCompletionState.TimedOut)
+            {
+                output = $"<waiting {timeoutMs}ms for cycodmd to finish, timed out>\n{output}";
+            }
+            
+            // Write debug files if verbose is enabled
             if (ConsoleHelpers.IsVerbose())
             {
                 var baseFileName = FileHelpers.GetFileNameFromTemplate("cycodmd_command.txt", "cycodmd-debug-{time}");
@@ -109,10 +69,16 @@ public class CycoDmdCliWrapper
 
                 ConsoleHelpers.WriteLine($"ExecuteCycoDmdCommandAsync inputs/outputs: {baseFileName}-*", ConsoleColor.DarkMagenta, overrideQuiet: true);
                 FileHelpers.WriteAllText($"{baseFileName}-command.txt", $"cycodmd {arguments}");
-                FileHelpers.WriteAllText($"{baseFileName}-stdout.txt", stdoutBuffer.ToString());
-                FileHelpers.WriteAllText($"{baseFileName}-stderr.txt", stderrBuffer.ToString());
-                FileHelpers.WriteAllText($"{baseFileName}-merged.txt", mergedBuffer.ToString());
+                FileHelpers.WriteAllText($"{baseFileName}-stdout.txt", result.StandardOutput);
+                FileHelpers.WriteAllText($"{baseFileName}-stderr.txt", result.StandardError);
+                FileHelpers.WriteAllText($"{baseFileName}-merged.txt", result.MergedOutput);
             }
+            
+            return output;
+        }
+        catch (Exception ex)
+        {
+            return $"<cycodmd command exited with error: {ex.Message}>";
         }
     }
 
@@ -123,15 +89,7 @@ public class CycoDmdCliWrapper
     /// <returns>The escaped argument</returns>
     public string EscapeArgument(string arg)
     {
-        var alreadyDoubleQuoted = arg.StartsWith("\"") && arg.EndsWith("\"");
-        if (alreadyDoubleQuoted) return arg;
-
-        var noSpacesOrSlashesOrQuotes = !arg.Contains(" ") && !arg.Contains("\\") && !arg.Contains("\"");
-        if (noSpacesOrSlashesOrQuotes) return arg;
-
-        var escaped = arg.Replace("\\", "\\\\").Replace("\"", "\\\"");
-        var needsDoubleQuotes = escaped.Contains(" ") || escaped.Contains("\\") || escaped.Contains("\"");
-        return needsDoubleQuotes ? $"\"{escaped}\"" : escaped;
+        return ProcessHelpers.EscapeProcessArgument(arg);
     }
 
     #region Search Codebase Methods

@@ -72,7 +72,7 @@ public class ConfigValue
         }
         
         // Show first 2 and last 2 characters, obfuscate the rest
-        return valueStr.Substring(0, 2) + new string('*', valueStr.Length - 4) + valueStr.Substring(valueStr.Length - 2);
+        return valueStr.Substring(0, 2) + new string('*', Math.Min(60, valueStr.Length - 4)) + valueStr.Substring(valueStr.Length - 2);
     }
 
     public int AsInt(int defaultValue = 0)

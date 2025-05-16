@@ -289,7 +289,7 @@ public partial class YamlTestCaseParser
         if (neitherOrBoth)
         {
             var message = $"Error parsing YAML: expected/unexpected key ('name', 'command', 'script', 'bash', 'arguments') at {context.File.FullName}({mapping.Start.Line})";
-            Logger.LogError(message);
+            Logger.LogWarning(message);
             return null;
         }
 
@@ -404,7 +404,7 @@ public partial class YamlTestCaseParser
 
     private static bool IsValidTestCaseNode(string? value)
     {
-        return !string.IsNullOrEmpty(value) && ";area;class;name;cli;command;script;bash;timeout;foreach;arguments;input;expect;expect-regex;not-expect-regex;parallelize;skipOnFailure;tag;tags;matrix;matrix-file;workingDirectory;env;sanitize;".IndexOf($";{value};") >= 0;
+        return !string.IsNullOrEmpty(value) && ";area;class;name;cli;command;script;bash;timeout;foreach;arguments;input;expect;expect-regex;not-expect-regex;parallelize;skipOnFailure;tag;tags;matrix;matrix-file;workingDirectory;env;sanitize;optional;".IndexOf($";{value};") >= 0;
     }
 
     private static void SetTestCaseProperty(TestCase test, string propertyName, YamlMappingNode mapping, string mappingName)
