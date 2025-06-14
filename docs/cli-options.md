@@ -17,6 +17,10 @@ CycoD supports the following commands:
 | `chat` | Start a chat session (default) |
 | `config` | Manage configuration settings |
 | `github login` | Authenticate with GitHub Copilot |
+| `alias list` | List all available aliases |
+| `alias get <name>` | View the content of a specific alias |
+| `alias add <name> <content>` | Add a new raw alias without syntax validation |
+| `alias delete <name>` | Delete an alias |
 | `version` | Display version information |
 | `help` | Display help information |
 
@@ -141,14 +145,32 @@ This saves the conversation in a more human-readable format.
 
 ### Creating an Alias
 
+There are two ways to create aliases:
+
+#### 1. Using --save-alias (for validated aliases)
+
 ```bash
 cycod --system-prompt "You are a helpful coding assistant." --save-alias coding-helper
 ```
 
-Using the alias:
+This creates an alias with syntax validation - all arguments must be valid at creation time.
+
+#### 2. Using the alias add command (for raw aliases)
 
 ```bash
+cycod alias add template-alias --content "--system-prompt \"You are a template\" --instruction"
+```
+
+This creates a raw alias without syntax validation - perfect for templates or partial commands.
+
+Using the aliases:
+
+```bash
+# Using a validated alias
 cycod --coding-helper --input "Help me write a Python function to sort a list of dictionaries by a specific key."
+
+# Using a raw alias
+cycod --template-alias "Write a function to do X"
 ```
 
 ### Managing Token Usage
@@ -260,6 +282,15 @@ cycod --python-expert --input "Explain decorators in Python" --output-chat-histo
 ```
 
 This applies all options from the `python-expert` alias and then adds the additional options specified.
+
+### Combining Multiple Aliases
+
+You can use multiple aliases in a single command (especially useful with raw aliases):
+
+```bash
+# Combine a system prompt alias with a specific instruction template
+cycod --python-expert --code-review-template "def add(a, b): return a + b"
+```
 
 ### Using Chat Commands
 

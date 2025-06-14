@@ -1,0 +1,58 @@
+CYCOD ALIAS ADD COMMAND
+
+  Creates a new alias with raw content without syntax validation.
+
+USAGE: cycod alias add ALIAS_NAME "CONTENT" [--scope]
+
+DESCRIPTION
+
+  The 'alias add' command creates a new alias that can be used with the --ALIAS_NAME
+  syntax. Unlike aliases created with --save-alias, aliases created with this command
+  don't undergo syntax validation, making them suitable for creating template-like
+  aliases or aliases with incomplete commands.
+
+  The content should be command-line arguments (without the 'cycod' prefix) that will
+  be inserted when the alias is used.
+
+PARAMETERS
+
+  ALIAS_NAME       Name of the alias to create
+
+  CONTENT          Command-line arguments to include in the alias
+                   Enclose in quotes if it contains spaces or special characters
+
+  SCOPE OPTIONS
+
+    --global, -g   Save in global scope (available to all users)
+    --user, -u     Save in user scope (available to current user in any directory)
+    --local, -l    Save in local scope (current directory) - DEFAULT
+
+EXAMPLES
+
+  # Create a local alias for code prompts
+  cycod alias add code-prompt "--add-system-prompt @/prompts/code-system-prompt.md --instruction"
+
+  # Create a user-scoped alias for Python programming
+  cycod alias add python-expert --user "--system-prompt \"You are a Python expert\""
+
+  # Create a global alias for Linux administration
+  cycod alias add linux-admin --global "--system-prompt \"You are a Linux administrator\""
+
+USAGE EXAMPLES
+
+  # Use the alias with required parameters
+  cycod --code-prompt "Write a sorting algorithm"
+
+  # Use the alias with other options
+  cycod --verbose --code-prompt "Write a sorting algorithm"
+
+  # Place the alias anywhere in the command line
+  cycod --input "Let's talk about" --code-prompt "sorting algorithms"
+
+SEE ALSO
+
+  cycod help alias
+  cycod help alias list
+  cycod help alias get
+  cycod help alias delete
+  cycod help aliases

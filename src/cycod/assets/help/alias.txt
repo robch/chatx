@@ -4,6 +4,7 @@ CYCOD ALIAS COMMANDS
 
 USAGE: cycod alias list [--scope]
    OR: cycod alias get ALIAS_NAME [--scope]
+   OR: cycod alias add ALIAS_NAME CONTENT [--scope]
    OR: cycod alias delete ALIAS_NAME [--scope]
 
 OPTIONS
@@ -19,11 +20,13 @@ COMMANDS
 
     list            List all available aliases
     get             Display the content of a specific alias
+    add             Create a new alias with raw content (no syntax validation)
     delete          Delete an alias
 
 SEE ALSO
 
   cycod help alias list
   cycod help alias get
+  cycod help alias add
   cycod help alias delete
   cycod help aliases

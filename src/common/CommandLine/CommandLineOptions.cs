@@ -90,12 +90,12 @@ public class CommandLineOptions
     }
 
     virtual protected bool TryParseOtherCommandOptions(Command? command, string[] args, ref int i, string arg)
-	{
-		return false;
+    {
+        return false;
     }
 
     virtual protected bool TryParseOtherCommandArg(Command? command, string arg)
-	{
+    {
         return false;
     }
 
@@ -103,7 +103,7 @@ public class CommandLineOptions
     {
         return args.SelectMany(arg => ExpandedInput(arg));
     }
-    
+
     protected IEnumerable<string> ExpandedInput(string input)
     {
         return input.StartsWith("@@")
@@ -146,6 +146,16 @@ public class CommandLineOptions
         Command? command = null;
 
         var args = this.AllOptions = allInputs.ToArray();
+
+        // Make a pass to deference all aliases.
+        for (int i = 0; i < args.Count(); i++)
+        {
+            if (args[i].StartsWith("--"))
+            {
+                ExpandAliasOptions(ref command, ref args, ref i, args[i].Substring(2));
+            }
+        }
+
         for (int i = 0; i < args.Count(); i++)
         {
             var parsed = TryParseInputOptions(ref command, args, ref i, args[i]);
@@ -192,7 +202,7 @@ public class CommandLineOptions
             var arguments = allowMultipleArgs
                 ? GetInputOptionArgs(i + 1, args).ToList()
                 : GetInputOptionArgs(i + 1, args, max: 1).ToList();
-            
+
             if (arguments.Count == 0)
             {
                 throw new CommandLineException($"Missing value for {arg}");
@@ -212,11 +222,11 @@ public class CommandLineOptions
                 ConfigStore.Instance.SetFromCommandLine(settingName!, arguments);
                 ConsoleHelpers.WriteDebugLine($"Set known setting from CLI: {settingName} = [{string.Join(", ", arguments)}]");
             }
-            
+
             i += arguments.Count;
             return true;
         }
-        
+
         return false;
     }
 
@@ -233,12 +243,6 @@ public class CommandLineOptions
         var needNewCommand = command == null;
         if (needNewCommand)
         {
-            if (arg.StartsWith("--"))
-            {
-                var parsedAsAlias = TryParseAliasOptions(ref command, args, ref i, arg.Substring(2));
-                if (parsedAsAlias) return true;
-            }
-
             var commandName = PeekCommandName(args, i);
             var partialCommandNeedsHelp = CheckPartialCommandNeedsHelp(commandName);
             if (partialCommandNeedsHelp)
@@ -282,18 +286,15 @@ public class CommandLineOptions
             i = args.Count();
             parsedOption = true;
         }
-        else if (arg.StartsWith("--"))
-        {
-            parsedOption = TryParseAliasOptions(ref command, args, ref i, arg.Substring(2));
-        }
         else if (command is HelpCommand helpCommand)
         {
             this.HelpTopic = $"{this.HelpTopic} {arg}".Trim();
             parsedOption = true;
         }
-        else if (TryParseOtherCommandArg(command, arg))
+
+        if (!parsedOption && TryParseOtherCommandArg(command, arg))
         {
-		    parsedOption = true;
+            parsedOption = true;
         }
 
         if (!parsedOption)
@@ -304,27 +305,21 @@ public class CommandLineOptions
         return parsedOption;
     }
 
-    protected bool TryParseAliasOptions(ref Command? command, string[] args, ref int currentIndex, string alias)
+    protected void ExpandAliasOptions(ref Command? command, ref string[] args, ref int currentIndex, string alias)
     {
         var aliasFilePath = AliasFileHelpers.FindAliasFile(alias);
         if (aliasFilePath != null && File.Exists(aliasFilePath))
         {
-            var aliasArgs = File.ReadAllLines(aliasFilePath)
+            var aliasLines = File.ReadAllLines(aliasFilePath);
+
+            var aliasArgs = aliasLines
                 .Select(x => x.StartsWith('@')
                     ? AtFileHelpers.ExpandAtFileValue(x)
                     : x)
                 .ToArray();
-            for (var j = 0; j < aliasArgs.Length; j++)
-            {
-                var parsed = TryParseInputOptions(ref command, aliasArgs, ref j, aliasArgs[j]);
-                if (!parsed)
-                {
-                    throw new CommandLineException($"Invalid argument in alias file: {aliasArgs[j]}");
-                }
-            }
-            return true;
+
+            args = args.Take(currentIndex).Concat(aliasArgs).Concat(args.Skip(currentIndex + 1)).ToArray();
         }
-        return false;
     }
 
     protected bool TryParseGlobalCommandLineOptions(string[] args, ref int i, string arg)
@@ -514,7 +509,7 @@ public class CommandLineOptions
     protected (string, string) ValidateAssignment(string arg, string? assignment)
     {
         assignment = ValidateString(arg, assignment, "assignment")!;
-        
+
         var parts = assignment.Split('=', 2);
         if (parts.Length != 2)
         {

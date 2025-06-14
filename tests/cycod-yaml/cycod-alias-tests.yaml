@@ -1,0 +1,122 @@
+- area: Alias Commands
+  tests:
+  - name: Alias List (empty initially)
+    run: cycod alias list --local
+    expect-regex: |
+      LOCATION: .*[\\/]\.cycod[\\/]aliases \(local\)
+      No aliases found in this scope
+
+  - name: Create Raw Alias with alias add
+    run: cycod alias add test-raw-alias "--system-prompt \"You are a test assistant\" --instruction"
+    expect-regex: |
+      Created alias 'test-raw-alias' in local scope.
+      Usage examples:
+        cycod --test-raw-alias \[additional arguments\]
+        cycod \[arguments\] --test-raw-alias \[more arguments\]
+
+  - name: Create Validated Alias with save-alias
+    run: cycod --system-prompt "You are a validated assistant" --save-alias test-validated-alias
+    expect-regex: |
+      Created alias file: .*[\\/]\.cycod[\\/]aliases[\\/]test-validated-alias\.alias
+      Use: cycod --test-validated-alias \[...\]
+
+  - name: Create Role Alias
+    run: cycod alias add python-expert "--system-prompt \"You are a Python expert\""
+    expect-regex: |
+      Created alias 'python-expert' in local scope.
+
+  - name: Create Template Alias
+    run: cycod alias add code-review "--add-system-prompt \"Review this code:\" --input"
+    expect-regex: |
+      Created alias 'code-review' in local scope.
+
+  - name: Alias List (after creating aliases)
+    run: cycod alias list --local
+    expect-regex: |
+      LOCATION: .*[\\/]\.cycod[\\/]aliases \(local\)
+      code-review
+      python-expert
+      test-raw-alias
+      test-validated-alias
+
+  - name: Alias Get (raw alias)
+    run: cycod alias get test-raw-alias
+    expect-regex: |
+      test-raw-alias
+      ----------------
+      #TYPE=raw
+      --system-prompt "You are a test assistant" --instruction
+      
+      LOCATION: .*[\\/]\.cycod[\\/]aliases[\\/]test-raw-alias\.alias \(local\)
+
+  - name: Alias Get (validated alias)
+    run: cycod alias get test-validated-alias
+    expect-regex: |
+      test-validated-alias
+      ----------------
+      --system-prompt
+      You are a validated assistant
+      
+      LOCATION: .*[\\/]\.cycod[\\/]aliases[\\/]test-validated-alias\.alias \(local\)
+
+  - name: Use Raw Alias with Required Argument
+    run: cycod --test-raw-alias "Write a test" --quiet
+    not-expect-regex: |
+      Error: Invalid argument in alias file
+
+  - name: Use Validated Alias
+    run: cycod --test-validated-alias --input "Hello" --quiet
+    not-expect-regex: |
+      Error: Invalid argument in alias file
+
+  - name: Combine Multiple Aliases
+    run: cycod --python-expert --code-review "def add(a, b): return a + b" --quiet
+    not-expect-regex: |
+      Error: Invalid argument in alias file
+
+  - name: Alias with cycod prefix is handled correctly
+    run: cycod alias add prefix-alias "cycod --system-prompt \"Test with prefix\""
+    expect-regex: |
+      Note: 'cycod' prefix removed from alias content \(not needed\).
+      Created alias 'prefix-alias' in local scope.
+
+  - name: Get Alias with cycod prefix removed
+    run: cycod alias get prefix-alias
+    expect-regex: |
+      prefix-alias
+      ----------------
+      #TYPE=raw
+      --system-prompt "Test with prefix"
+      
+      LOCATION: .*[\\/]\.cycod[\\/]aliases[\\/]prefix-alias\.alias \(local\)
+
+  - name: Alias Delete (raw alias)
+    run: cycod alias delete test-raw-alias
+    expect-regex: |
+      Deleted: .*[\\/]\.cycod[\\/]aliases[\\/]test-raw-alias\.alias
+
+  - name: Alias Delete (validated alias)
+    run: cycod alias delete test-validated-alias
+    expect-regex: |
+      Deleted: .*[\\/]\.cycod[\\/]aliases[\\/]test-validated-alias\.alias
+
+  - name: Alias Delete (prefix alias)
+    run: cycod alias delete prefix-alias
+    expect-regex: |
+      Deleted: .*[\\/]\.cycod[\\/]aliases[\\/]prefix-alias\.alias
+
+  - name: Alias Delete (python-expert)
+    run: cycod alias delete python-expert
+    expect-regex: |
+      Deleted: .*[\\/]\.cycod[\\/]aliases[\\/]python-expert\.alias
+
+  - name: Alias Delete (code-review)
+    run: cycod alias delete code-review
+    expect-regex: |
+      Deleted: .*[\\/]\.cycod[\\/]aliases[\\/]code-review\.alias
+
+  - name: Alias List (after deletion)
+    run: cycod alias list --local
+    expect-regex: |
+      LOCATION: .*[\\/]\.cycod[\\/]aliases \(local\)
+      No aliases found in this scope

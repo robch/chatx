@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "cycod": {
+      "commandName": "Project",
+      "commandLineArgs": "--code \"Tell me a joke\""
+    }
+  }
+}

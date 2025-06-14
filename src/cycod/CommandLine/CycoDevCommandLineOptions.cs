@@ -68,6 +68,7 @@ public class CycoDevCommandLineOptions : CommandLineOptions
             "config remove" => new ConfigRemoveCommand(),
             "alias list" => new AliasListCommand(),
             "alias get" => new AliasGetCommand(),
+            "alias add" => new AliasAddCommand(),
             "alias delete" => new AliasDeleteCommand(),
             "prompt list" => new PromptListCommand(),
             "prompt get" => new PromptGetCommand(),
@@ -148,6 +149,21 @@ public class CycoDevCommandLineOptions : CommandLineOptions
         {
             aliasGetCommand.AliasName = arg;
             parsedOption = true;
+        }
+        else if (command is AliasAddCommand aliasAddCommand)
+        {
+            if (string.IsNullOrEmpty(aliasAddCommand.AliasName))
+            {
+                aliasAddCommand.AliasName = arg;
+                parsedOption = true;
+            }
+            else if (string.IsNullOrEmpty(aliasAddCommand.Content))
+            {
+                // Just store the current argument as content
+                // The proper handling of all content will be done in ExecuteAsync
+                aliasAddCommand.Content = arg;
+                parsedOption = true;
+            }
         }
         else if (command is AliasDeleteCommand aliasDeleteCommand && string.IsNullOrEmpty(aliasDeleteCommand.AliasName))
         {
